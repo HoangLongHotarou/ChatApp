@@ -123,8 +123,7 @@ def deleteRoom(request,room_id):
         messages.info(request,'delete successfully!')
     else:
         messages.info(request,'Invalid user!')
-    # return redirect('Chat:index')
-    return  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 @login_required(login_url='Chat:user')
 def escapeRoom(request,room_id):
