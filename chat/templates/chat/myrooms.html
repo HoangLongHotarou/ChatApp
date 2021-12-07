@@ -34,7 +34,7 @@
                 <div class="room-info">
                     <p class="date-create">Created By {{room.user.username}}</p>
                     <div class="room-menu">
-                        <a href="#">Update</a>
+                        <a href="{% url 'Chat:updateroom' room.id %}">Update</a>
                         <a class="btnDelete" onclick='showDeleteRoomDialog("{{room.name}}", "{{room.id}}")'>Delete</a>
                     </div>
                 </div>

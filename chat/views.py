@@ -5,8 +5,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.contrib import messages
-from .forms import CreateUserForm
-from .models import Message, Room, RoomHistory,Information
+from .forms import CreateUserForm, UpdateRoom
+from .models import Message, Room, RoomHistory, Information
 from django.http import HttpResponseRedirect
 import datetime
 
@@ -21,22 +21,26 @@ def index(request):
         if 'create-room' in request.POST:
             room_name = request.POST.get('room-name')
             password = request.POST.get('room-pwd')
-            room = Room.objects.filter(user=request.user, name=room_name).first()
+            room = Room.objects.filter(
+                user=request.user, name=room_name).first()
             if room == None:
-                room = Room.objects.create(user=request.user, name=room_name, password=password)
+                room = Room.objects.create(
+                    user=request.user, name=room_name, password=password)
                 RoomHistory.objects.create(user=request.user, room=room)
             return redirect("Chat:room", room_id=room.id)
         elif 'search-room' in request.POST:
             room_name = request.POST.get('room-name')
             if room_name != "":
                 rooms = Room.objects.all()
-                rooms = [room for room in rooms if room.name.lower().find(room_name.lower())!=-1]
+                rooms = [room for room in rooms if room.name.lower().find(
+                    room_name.lower()) != -1]
     # create info user
-    if Information.objects.filter(user=request.user).exists() ==False:
-        d= datetime.date(2000,1,1)
-        Information.objects.create(user=request.user,imagelink='/person.png',birthday=d,status=False)
+    if Information.objects.filter(user=request.user).exists() == False:
+        d = datetime.date(2000, 1, 1)
+        Information.objects.create(
+            user=request.user, imagelink='/person.png', birthday=d, status=False)
     info_entity = Information.objects.filter(user=request.user).first()
-    return render(request, 'chat/index.html', {"rhs": rhs, "rooms": rooms, "user_name": request.user.username,"info_entity":info_entity})
+    return render(request, 'chat/index.html', {"rhs": rhs, "rooms": rooms, "user_name": request.user.username, "info_entity": info_entity})
 
 
 @login_required(login_url='Chat:user')
@@ -46,10 +50,11 @@ def room(request, room_id):
         messages.info(request, 'Khong co phong nay!')
         return redirect("Chat:index")
     if not RoomHistory.objects.filter(room=room_entity, user=request.user).exists():
-        room_password=""
+        room_password = ""
         if request.method == "POST":
             room_password = request.POST.get('room-pwd')
-        room_entity = Room.objects.filter(id=room_id, password=room_password).first()
+        room_entity = Room.objects.filter(
+            id=room_id, password=room_password).first()
         if room_entity == None:
             messages.info(request, 'Mat khau sai!')
             return redirect("Chat:index")
@@ -60,29 +65,34 @@ def room(request, room_id):
     info_entity = Information.objects.filter(user=request.user).first()
     rhs = RoomHistory.objects.filter(room=room_entity)
     infors = [Information.objects.filter(user=rh.user).first() for rh in rhs]
-    return render(request, 'chat/room.html', {'room_entity': room_entity, 'username': username, 'messages': mgs, "info_entity":info_entity,"infors":infors})
+    return render(request, 'chat/room.html', {'room_entity': room_entity, 'username': username, 'messages': mgs, "info_entity": info_entity, "infors": infors})
+
 
 @login_required(login_url='Chat:user')
 def myrooms(request):
-    rooms = Room.objects.filter(user = request.user)
+    rooms = Room.objects.filter(user=request.user)
     if 'create-room' in request.POST:
         room_name = request.POST.get('room-name')
         password = request.POST.get('room-pwd')
         room = Room.objects.filter(user=request.user, name=room_name).first()
         if room == None:
-            room = Room.objects.create(user=request.user, name=room_name, password=password)
+            room = Room.objects.create(
+                user=request.user, name=room_name, password=password)
             RoomHistory.objects.create(user=request.user, room=room)
         return redirect("Chat:room", room_id=room.id)
     elif 'search-room' in request.POST:
         room_name = request.POST.get('room-name')
         if room_name != "":
-            rooms = [room for room in rooms if room.name.lower().find(room_name.lower())!=-1]
+            rooms = [room for room in rooms if room.name.lower().find(
+                room_name.lower()) != -1]
     # create info user
     if Information.objects.filter(user=request.user).exists() == False:
-        d= datetime.date(2000,1,1)
-        Information.objects.create(user=request.user,imagelink='/person.png',birthday=d,status=False)
+        d = datetime.date(2000, 1, 1)
+        Information.objects.create(
+            user=request.user, imagelink='/person.png', birthday=d, status=False)
     info_entity = Information.objects.filter(user=request.user).first()
-    return render(request, 'chat/myrooms.html', {"rooms": rooms, "user_name": request.user.username,"info_entity":info_entity})
+    return render(request, 'chat/myrooms.html', {"rooms": rooms, "user_name": request.user.username, "info_entity": info_entity})
+
 
 def UserLoginRegister(request):
     if request.user.is_authenticated:
@@ -115,36 +125,54 @@ def UserLoginRegister(request):
         context = {'form': form}
         return render(request, 'User/User.html', context)
 
+
 @login_required(login_url='Chat:user')
-def deleteRoom(request,room_id):
+def updateRoom(request, room_id):
+    room = Room.objects.get(id=room_id)
+    if request.method != "POST":
+        form = UpdateRoom(instance=room)
+    else:
+        form = UpdateRoom(instance=room, data=request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    context = {'room': room, 'form': form}
+    return render(request, 'user/update.html', context)
+
+
+@login_required(login_url='Chat:user')
+def deleteRoom(request, room_id):
     room = Room.objects.get(id=room_id)
     if room.user == request.user:
         room.delete()
-        messages.info(request,'delete successfully!')
+        messages.info(request, 'delete successfully!')
     else:
-        messages.info(request,'Invalid user!')
+        messages.info(request, 'Invalid user!')
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 @login_required(login_url='Chat:user')
-def escapeRoom(request,room_id):
+def escapeRoom(request, room_id):
     room = Room.objects.get(id=room_id)
-    rh = RoomHistory.objects.get(room=room,user=request.user)
+    rh = RoomHistory.objects.get(room=room, user=request.user)
     if rh != None:
         rh.delete()
-        messages.info(request,'escape successfully!')
+        messages.info(request, 'escape successfully!')
     else:
-        messages.info(request,'Invalid processing!')
+        messages.info(request, 'Invalid processing!')
     return redirect('Chat:index')
+
 
 def logoutUser(request):
     logout(request)
     return redirect('Chat:user')
 
-def account_view(request,user_name):
-    # getID_room = 
-    if Information.objects.filter(user=request.user).exists() ==False:
-        d= datetime.date(2000,1,1)
-        Information.objects.create(user=request.user,imagelink='/person.png',birthday=d,status=False)
-    info_entity = Information.objects.filter(user=request.user).first()  
-    return render(request,'user/info.html',{'info_entity':info_entity,'username':request.user.username})
-    
+
+def account_view(request, user_name):
+    # getID_room =
+    if Information.objects.filter(user=request.user).exists() == False:
+        d = datetime.date(2000, 1, 1)
+        Information.objects.create(
+            user=request.user, imagelink='/person.png', birthday=d, status=False)
+    info_entity = Information.objects.filter(user=request.user).first()
+    return render(request, 'user/info.html', {'info_entity': info_entity, 'username': request.user.username})

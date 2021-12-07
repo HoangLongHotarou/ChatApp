@@ -13,7 +13,8 @@ urlpatterns = [
     path('chatroom/<int:room_id>', views.room,name='room'),
     path('myrooms/', views.myrooms, name='myrooms'),
     path('delete_room/<int:room_id>', views.deleteRoom, name='deleteroom'),
-    path('escape_room/<int:room_id>', views.escapeRoom, name='escaperoom')
+    path('escape_room/<int:room_id>', views.escapeRoom, name='escaperoom'),
+    path('update_room/<int:room_id>', views.updateRoom, name='updateroom')
 ]
 
 if settings.DEBUG:

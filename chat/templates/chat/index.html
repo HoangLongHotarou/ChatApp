@@ -53,7 +53,7 @@
                     {% if rhs|user_filter:room|user_compare:request.user %}
                     <div class="room-menu">
                         {% if room.user.username == user_name %}
-                            <a href="#">Update</a>
+                            <a href="{% url 'Chat:updateroom' room.id %}">Update</a>
                             <a class="btnDelete" onclick='showDeleteRoomDialog("{{room.name}}", "{{room.id}}")'>Delete</a>                              
                         {%else%}
                             <a class="btnDelete" onclick='showEscapeRoomDialog("{{room.name}}", "{{room.id}}")'>Escape</a> 
